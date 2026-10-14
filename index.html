@@ -28,7 +28,6 @@
   }
   @media (max-width:700px){:root{--lane:30px}}
   *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
   body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.65 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
   a{color:inherit}
   button{font:inherit;color:inherit}
@@ -115,6 +114,8 @@
 
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 24px;border-radius:12px;background:var(--grad);color:#0a0a0a!important;text-decoration:none;border:0;cursor:pointer;font-weight:700;font-size:15px;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,opacity .2s;box-shadow:0 8px 30px -8px rgba(255,106,61,.6)}
   .btn:hover{box-shadow:0 12px 40px -6px rgba(255,106,61,.85)}
+  .btn:active{filter:brightness(.88)}
+  a,button,summary,[role=button]{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .btn.sm{padding:9px 16px;font-size:14px;border-radius:99px}
   .btn.ghost{background:transparent;color:var(--fg)!important;border:1px solid var(--line-2);box-shadow:none}
   .btn.ghost:hover{background:rgba(255,255,255,.05)}
@@ -1299,7 +1300,7 @@
       closeDrawer();
       const btn = [...document.querySelectorAll('#areas button')].find(b => b.textContent === dwSkill[0]);
       if (btn && btn.getAttribute('aria-pressed') !== 'true') btn.click();
-      setTimeout(() => document.getElementById('contato').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }), 120);
+      setTimeout(() => goTo(document.getElementById('contato')), 60);
     };
   }
   function closeDrawer() {
@@ -1420,6 +1421,40 @@
       b.addEventListener('pointerleave', () => b.style.transform = '');
     });
   }
+
+  /* ---------- Navegação interna imediata ---------- */
+  // Rolagem própria: começa no mesmo quadro do clique e leva no máximo 0,65 s, qualquer que seja a distância
+  let navAnim = 0;
+  const easeOut = t => 1 - Math.pow(1 - t, 4);
+  const cancelNav = () => { navAnim++; };
+  function goTo(target) {
+    const margin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+    const max = root.scrollHeight - innerHeight;
+    const y = clamp(target.getBoundingClientRect().top + scrollY - margin, 0, max);
+    if (reduce) { scrollTo(0, y); return; }
+    const y0 = scrollY, dist = y - y0, dur = Math.min(650, 260 + Math.abs(dist) * .05);
+    const id = ++navAnim, t0 = performance.now();
+    scrollTo(0, y0 + dist * easeOut(16 / dur));
+    (function step(now) {
+      if (id !== navAnim) return;
+      const k = Math.min(1, (now - t0) / dur);
+      scrollTo(0, y0 + dist * easeOut(k));
+      if (k < 1) requestAnimationFrame(step);
+    })(t0);
+  }
+  addEventListener('wheel', cancelNav, { passive: true });
+  addEventListener('touchstart', cancelNav, { passive: true });
+  addEventListener('keydown', e => { if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key)) cancelNav(); });
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    const hash = a.getAttribute('href');
+    const target = hash.length > 1 && document.querySelector(hash);
+    if (!target) return;
+    e.preventDefault();
+    if (location.hash !== hash) history.pushState(null, '', hash);
+    goTo(target);
+  });
 
   /* ---------- Títulos palavra por palavra ---------- */
   if (!reduce) {
