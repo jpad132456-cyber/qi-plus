@@ -1423,22 +1423,27 @@
   }
 
   /* ---------- Navegação interna imediata ---------- */
-  // Rolagem própria: começa no mesmo quadro do clique e leva no máximo 0,65 s, qualquer que seja a distância
+  // Começa no mesmo quadro do clique. O trecho animado nunca passa de ~1,2 tela:
+  // se o destino está longe, a página salta para perto dele e desliza só o final,
+  // evitando saltos de mais de uma tela por quadro (que o olho lê como travada).
   let navAnim = 0;
-  const easeOut = t => 1 - Math.pow(1 - t, 4);
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const cancelNav = () => { navAnim++; };
   function goTo(target) {
     const margin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
     const max = root.scrollHeight - innerHeight;
     const y = clamp(target.getBoundingClientRect().top + scrollY - margin, 0, max);
     if (reduce) { scrollTo(0, y); return; }
-    const y0 = scrollY, dist = y - y0, dur = Math.min(650, 260 + Math.abs(dist) * .05);
+    const span = innerHeight * 1.2, far = Math.abs(y - scrollY) > span;
+    if (far) scrollTo(0, y - Math.sign(y - scrollY) * span);
+    const y0 = scrollY, dist = y - y0, ease = far ? easeOut : easeInOut;
+    const dur = 380 + Math.abs(dist) * .25;
     const id = ++navAnim, t0 = performance.now();
-    scrollTo(0, y0 + dist * easeOut(16 / dur));
     (function step(now) {
       if (id !== navAnim) return;
       const k = Math.min(1, (now - t0) / dur);
-      scrollTo(0, y0 + dist * easeOut(k));
+      scrollTo(0, y0 + dist * ease(k));
       if (k < 1) requestAnimationFrame(step);
     })(t0);
   }
