@@ -429,8 +429,9 @@
   .btn:disabled::after{display:none}
   @keyframes shine{0%,74%{left:-60%}100%{left:130%}}
   /* cabeçalho e CTA flutuante que dão espaço */
-  header{transition:border-color .3s,transform .45s cubic-bezier(.2,.8,.2,1)}
+  header{transition:border-color .3s,transform .6s cubic-bezier(.22,1,.36,1);will-change:transform}
   header.hide{transform:translateY(-100%)}
+  .float-cta{transition:transform .6s cubic-bezier(.22,1,.36,1),opacity .45s ease;will-change:transform}
   .float-cta.show.away{transform:translateY(150%);opacity:0}
   /* menu indica a seção atual */
   nav.top a:not(.btn){position:relative}
@@ -1421,20 +1422,27 @@
   /* ---------- Cabeçalho, CTA flutuante e menu ativo ---------- */
   const navLinks = [...document.querySelectorAll('nav.top a[href^="#"]:not(.btn)')];
   const navSecs = navLinks.map(a => document.querySelector(a.getAttribute('href')));
-  let lastY = scrollY, stopT, chromeTick = false;
+  // Some só depois de rolar uma distância contínua para baixo; volta com um gesto curto para cima
+  const HIDE_AFTER = 160, SHOW_AFTER = 50, TOP_ZONE = 320;
+  let lastY = scrollY, sDir = 0, sRun = 0, stopT, chromeTick = false;
   function chrome() {
-    const y = scrollY, down = y > lastY + 3, up = y < lastY - 3;
-    if (!mnav.classList.contains('open') && !header.contains(document.activeElement)) {
-      if (down && y > 320) header.classList.add('hide');
-      else if (up || y < 320) header.classList.remove('hide');
+    const y = scrollY, dy = y - lastY;
+    lastY = y;
+    if (dy) {
+      const d = Math.sign(dy);
+      if (d !== sDir) { sDir = d; sRun = 0; }
+      sRun += Math.abs(dy);
     }
-    if (down) floatCta.classList.add('away'); else if (up) floatCta.classList.remove('away');
-    clearTimeout(stopT); stopT = setTimeout(() => floatCta.classList.remove('away'), 650);
+    const goneDown = sDir > 0 && sRun > HIDE_AFTER, cameUp = sDir < 0 && sRun > SHOW_AFTER;
+    const keepHeader = mnav.classList.contains('open') || header.querySelector(':focus-visible');
+    if (y < TOP_ZONE || cameUp || keepHeader) header.classList.remove('hide');
+    else if (goneDown) header.classList.add('hide');
+    if (goneDown) floatCta.classList.add('away'); else if (cameUp) floatCta.classList.remove('away');
+    clearTimeout(stopT); stopT = setTimeout(() => floatCta.classList.remove('away'), 900);
     ambient.classList.toggle('hot', y < innerHeight * 1.25);
     let on = -1;
     navSecs.forEach((s, i) => { if (s && s.getBoundingClientRect().top < innerHeight * .45) on = i; });
     navLinks.forEach((a, i) => a.classList.toggle('on', i === on));
-    if (Math.abs(y - lastY) > 3) lastY = y;
     chromeTick = false;
   }
   addEventListener('scroll', () => { if (!chromeTick) { chromeTick = true; requestAnimationFrame(chrome); } }, { passive: true });
