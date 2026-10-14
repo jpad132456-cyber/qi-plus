@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skillhub — skills de IA de alta qualidade para empresas</title>
+<meta name="description" content="Sua empresa já usa IA. O problema é que cada pessoa usa de um jeito. Skills de alta qualidade, compatíveis com Claude Code, Codex e Antigravity.">
+<meta name="theme-color" content="#060608">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#060608; --bg-2:#0c0c10; --card:#101015; --card-2:#15151c;
+    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+    --fg:#f7f7f8; --muted:#b4b4bf; --dim:#7d7d8a;
+    --accent:#ff6a3d; --accent-2:#ffb03a; --violet:#8b6cff; --cyan:#3dd6ff;
+    --bad:#ff7b72; --good:#4ade80;
+    --grad:linear-gradient(100deg,var(--accent) 0%,var(--accent-2) 100%);
+    --p:0; /* progresso de rolagem 0–1, atualizado via JS */
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.65 Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit}
+  ::selection{background:var(--accent);color:#000}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px;position:relative;z-index:2}
+  @media (max-width:600px){.wrap{padding:0 16px}}
+
+  /* ===== Elementos contínuos ===== */
+  /* 1. Barra de progresso no topo */
+  .progress{position:fixed;top:0;left:0;height:2px;width:calc(var(--p)*100%);background:var(--grad);z-index:100;box-shadow:0 0 12px var(--accent)}
+  /* 2. Luzes ambientes que se movem com a rolagem */
+  .ambient{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .orb{position:absolute;border-radius:50%;filter:blur(110px);opacity:.38;will-change:transform}
+  .orb.a{width:620px;height:620px;background:var(--accent);top:-220px;left:-160px;
+    transform:translate(calc(var(--p)*55vw),calc(var(--p)*80vh))}
+  .orb.b{width:520px;height:520px;background:var(--violet);top:30vh;right:-200px;opacity:.28;
+    transform:translate(calc(var(--p)*-45vw),calc(var(--p)*30vh))}
+  .grid-bg{position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:64px 64px;mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);opacity:.5}
+  /* 3. Trilho lateral com o percurso da página */
+  .rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:22px;padding:4px 0}
+  .rail::before,.rail::after{content:"";position:absolute;left:5px;top:0;width:2px;border-radius:2px}
+  .rail::before{bottom:0;background:var(--line-2)}
+  .rail::after{height:calc(var(--p)*100%);background:var(--grad);box-shadow:0 0 10px var(--accent)}
+  .rail a{position:relative;z-index:1;display:flex;align-items:center;gap:14px;text-decoration:none;font-size:13px;color:var(--dim);font-weight:500}
+  .rail a i{width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--line-2);transition:.3s}
+  .rail a span{opacity:0;transform:translateX(-6px);transition:.3s;white-space:nowrap}
+  .rail:hover a span,.rail a.on span{opacity:1;transform:none}
+  .rail a.on{color:var(--fg)}
+  .rail a.on i,.rail a.done i{border-color:var(--accent);background:var(--accent);box-shadow:0 0 12px var(--accent)}
+  @media (max-width:1280px){.rail{display:none}}
+  /* 4. CTA flutuante que acompanha a leitura */
+  .float-cta{position:fixed;right:24px;bottom:24px;z-index:60;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 18px;border-radius:99px;background:rgba(16,16,21,.8);backdrop-filter:blur(14px);border:1px solid var(--line-2);font-size:14px;color:var(--muted);transform:translateY(140%);opacity:0;transition:.45s cubic-bezier(.2,.8,.2,1)}
+  .float-cta.show{transform:none;opacity:1}
+  .float-cta .ring{width:22px;height:22px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p)*360deg),var(--line-2) 0);-webkit-mask:radial-gradient(circle,transparent 6px,#000 7px);mask:radial-gradient(circle,transparent 6px,#000 7px)}
+  @media (max-width:600px){.float-cta{left:16px;right:16px;bottom:16px;justify-content:space-between}.float-cta .txt{display:none}}
+
+  /* ===== Topo ===== */
+  header{position:sticky;top:0;z-index:70;backdrop-filter:blur(16px);background:rgba(6,6,8,.72);border-bottom:1px solid transparent;transition:border-color .3s}
+  header.scrolled{border-bottom-color:var(--line)}
+  .bar{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;text-decoration:none;letter-spacing:-.02em}
+  .logo b{width:26px;height:26px;border-radius:8px;background:var(--grad);display:grid;place-items:center;color:#000;font-size:14px}
+  nav{display:flex;align-items:center;gap:26px}
+  nav a{text-decoration:none;color:var(--muted);font-size:14px;font-weight:500;transition:color .2s}
+  nav a:hover{color:var(--fg)}
+  @media (max-width:820px){nav a:not(.btn){display:none}}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:12px;background:var(--grad);color:#0a0a0a!important;text-decoration:none;font-weight:700;border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;transition:transform .2s,box-shadow .2s;box-shadow:0 8px 30px -8px rgba(255,106,61,.6)}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px -8px rgba(255,106,61,.8)}
+  .btn.sm{padding:9px 16px;font-size:14px;border-radius:99px}
+  .btn.ghost{background:transparent;color:var(--fg)!important;border:1px solid var(--line-2);box-shadow:none}
+  .btn.ghost:hover{background:rgba(255,255,255,.05)}
+
+  /* ===== Hero ===== */
+  .hero{padding:96px 0 40px;text-align:center}
+  .tag{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border:1px solid var(--line-2);border-radius:99px;font-size:13px;color:var(--muted);margin-bottom:28px;background:rgba(255,255,255,.03)}
+  .tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good)}
+  h1{font-size:clamp(40px,7vw,80px);line-height:1;letter-spacing:-.045em;margin:0 auto 26px;max-width:940px;font-weight:800}
+  .gt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{max-width:660px;margin:0 auto 36px;color:var(--muted);font-size:19px}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+  /* Faixa de compatibilidade */
+  .compat{margin:64px auto 0;text-align:center}
+  .compat p{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 18px;font-weight:600}
+  .logos{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .brand{display:inline-flex;align-items:center;gap:12px;padding:12px 22px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.025);font-weight:700;font-size:16px;letter-spacing:-.01em;transition:.25s}
+  .brand:hover{border-color:var(--line-2);background:rgba(255,255,255,.05)}
+  .brand img{height:26px;width:auto;display:block}
+
+  /* Terminal */
+  .term{max-width:720px;margin:56px auto 0;border:1px solid var(--line-2);border-radius:var(--radius);background:linear-gradient(180deg,#111117,#0a0a0e);text-align:left;overflow:hidden;box-shadow:0 40px 120px -30px rgba(255,106,61,.35),0 0 0 1px rgba(255,255,255,.02) inset}
+  .term-top{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .term-top .d{width:11px;height:11px;border-radius:50%;background:#2a2a33}
+  .tabs{display:flex;gap:4px;margin-left:14px;flex-wrap:wrap}
+  .tabs button{font:500 12.5px JetBrains Mono,monospace;color:var(--dim);background:none;border:1px solid transparent;border-radius:8px;padding:5px 10px;cursor:pointer}
+  .tabs button.on{color:var(--fg);border-color:var(--line-2);background:rgba(255,255,255,.04)}
+  .term pre{margin:0;padding:22px 22px 26px;font:14px/1.85 JetBrains Mono,ui-monospace,monospace;color:#e6e6ea;white-space:pre-wrap;min-height:190px}
+  .term .c{color:var(--dim)} .term .ok{color:var(--good)} .term .ac{color:var(--accent-2)}
+
+  /* ===== Seções ===== */
+  section{padding:120px 0;position:relative}
+  @media (max-width:600px){section{padding:80px 0}}
+  .eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:JetBrains Mono,monospace;font-size:13px;font-weight:500;color:var(--accent);margin-bottom:16px}
+  .eyebrow::before{content:"";width:24px;height:1px;background:var(--accent)}
+  h2{font-size:clamp(32px,4.6vw,54px);letter-spacing:-.04em;margin:0 0 18px;line-height:1.05;max-width:820px;font-weight:800}
+  .sub{color:var(--muted);margin:0 0 52px;max-width:660px;font-size:18px}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:28px;overflow:hidden;transition:border-color .3s,transform .3s}
+  .card::before{content:"";position:absolute;inset:0;background:radial-gradient(420px circle at var(--mx,50%) var(--my,-100%),rgba(255,106,61,.13),transparent 45%);pointer-events:none;opacity:0;transition:opacity .3s;border-radius:inherit}
+  .card:hover{border-color:var(--line-2)}
+  .card:hover::before{opacity:1}
+  .card h3{margin:0 0 10px;font-size:19px;line-height:1.3;letter-spacing:-.015em}
+  .card p{margin:0;color:var(--muted);font-size:15.5px}
+
+  /* Dor */
+  .quote{font-size:21px;font-weight:700;line-height:1.3;margin-bottom:14px;letter-spacing:-.02em}
+  .quote::before{content:"“";color:var(--accent)} .quote::after{content:"”";color:var(--accent)}
+  .cost{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .cost div{padding:26px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);margin:0 -1px -1px 0;background:var(--bg-2)}
+  .cost strong{display:flex;align-items:center;gap:10px;font-size:17px;margin-bottom:6px}
+  .cost strong::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--bad);box-shadow:0 0 10px var(--bad)}
+  .cost span{color:var(--muted);font-size:14.5px}
+
+  /* Comparação */
+  .compare{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  @media (max-width:600px){.compare{grid-template-columns:1fr}}
+  .col{border-radius:var(--radius);padding:30px;border:1px solid var(--line);background:var(--card)}
+  .col.good{border-color:rgba(74,222,128,.35);background:linear-gradient(180deg,rgba(74,222,128,.07),var(--card) 60%)}
+  .lbl{font:600 12px JetBrains Mono,monospace;text-transform:uppercase;letter-spacing:.08em}
+  .bad .lbl{color:var(--bad)} .good .lbl{color:var(--good)}
+  .col h3{margin:6px 0 0;font-size:24px;letter-spacing:-.025em}
+  .col ul{list-style:none;padding:0;margin:20px 0 0}
+  .col li{padding:12px 0 12px 32px;position:relative;border-top:1px solid var(--line);font-size:15.5px;color:var(--muted)}
+  .good li{color:var(--fg)}
+  .col li::before{position:absolute;left:2px;top:12px;font-weight:800;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:11px}
+  .bad li::before{content:"✕";color:var(--bad);background:rgba(255,123,114,.12)}
+  .good li::before{content:"✓";color:var(--good);background:rgba(74,222,128,.14)}
+  .example{margin-top:16px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  @media (max-width:600px){.example{grid-template-columns:1fr}}
+  .example .card{padding:0}
+  .example .cap{font:500 12.5px JetBrains Mono,monospace;color:var(--dim);margin:0;padding:14px 20px;border-bottom:1px solid var(--line)}
+  .example pre{margin:0;padding:20px;font:13.5px/1.75 JetBrains Mono,monospace;white-space:pre-wrap;color:#dcdce2}
+  .example .hl{color:var(--accent-2)}
+
+  /* Solução (bento) */
+  .bento{display:grid;gap:16px;grid-template-columns:repeat(3,1fr)}
+  .bento .wide{grid-column:span 2}
+  @media (max-width:900px){.bento{grid-template-columns:1fr 1fr}.bento .wide{grid-column:span 2}}
+  @media (max-width:600px){.bento{grid-template-columns:1fr}.bento .wide{grid-column:auto}}
+  .bento .card{display:flex;flex-direction:column;gap:6px;min-height:250px}
+  .bento .ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:rgba(255,106,61,.12);border:1px solid rgba(255,106,61,.3);color:var(--accent-2);font-size:19px;margin-bottom:14px}
+  .bento .viz{margin-top:auto;padding-top:22px}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font:500 12.5px JetBrains Mono,monospace}
+  .flow span{padding:7px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--bg);color:var(--muted)}
+  .flow span.on{border-color:rgba(255,106,61,.5);color:var(--fg);background:rgba(255,106,61,.08)}
+  .flow b{color:var(--dim);font-weight:400}
+  .repo{list-style:none;margin:0;padding:0;font:500 12.5px JetBrains Mono,monospace}
+  .repo li{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line);color:var(--muted)}
+  .repo em{font-style:normal;color:var(--good)}
+  .bars{display:grid;gap:12px;font:500 12px JetBrains Mono,monospace;color:var(--dim)}
+  .bars .row{display:grid;gap:6px}
+  .bars .track{height:10px;border-radius:99px;background:var(--line)}
+  .bars .b{height:100%;border-radius:99px;width:0;transition:width 1.4s cubic-bezier(.2,.8,.2,1) .3s}
+  .bars .b.no{background:#4a4a55}
+  .bars .b.yes{background:var(--grad);box-shadow:0 0 12px rgba(255,106,61,.5)}
+  .in .bars .b.no{width:100%} .in .bars .b.yes{width:38%}
+  .checks{list-style:none;margin:0;padding:0;font:500 12.5px JetBrains Mono,monospace;display:grid;gap:8px}
+  .checks li{color:var(--muted)} .checks li::before{content:"✓  ";color:var(--good);font-weight:700}
+
+  /* Pilares */
+  .num{font:500 13px JetBrains Mono,monospace;color:var(--accent);margin-bottom:28px;display:block}
+  .pillar{min-height:230px;display:flex;flex-direction:column;justify-content:flex-end}
+
+  /* Compatibilidade detalhada */
+  .tools{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+  .tool .head{display:flex;align-items:center;gap:12px;margin-bottom:18px;min-height:32px}
+  .tool .head img{height:30px;width:auto}
+  .tool .head strong{font-size:20px;letter-spacing:-.02em}
+  .tool code{display:block;margin-top:20px;padding:12px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font:13px JetBrains Mono,monospace;color:var(--accent-2);overflow-x:auto;white-space:nowrap}
+  .one{margin-top:16px;padding:22px 28px;border-radius:var(--radius);border:1px dashed var(--line-2);display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;color:var(--muted)}
+  .one strong{color:var(--fg)}
+
+  /* Linha do tempo com fio contínuo */
+  .timeline{position:relative;padding-left:44px}
+  .timeline::before{content:"";position:absolute;left:11px;top:8px;bottom:8px;width:2px;background:var(--line-2);border-radius:2px}
+  .timeline .fill{position:absolute;left:11px;top:8px;width:2px;height:0;background:var(--grad);box-shadow:0 0 12px var(--accent);border-radius:2px;transition:height .15s linear}
+  .step{position:relative;margin-bottom:20px;overflow:visible}
+  .step::after{content:"";position:absolute;left:-39px;top:30px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:2px solid var(--line-2);transition:.4s}
+  .step.lit::after{border-color:var(--accent);background:var(--accent);box-shadow:0 0 14px var(--accent)}
+  .when{font:500 12.5px JetBrains Mono,monospace;color:var(--accent);margin-bottom:8px}
+
+  details{border-bottom:1px solid var(--line);padding:22px 0}
+  summary{cursor:pointer;font-weight:600;font-size:18px;list-style:none;display:flex;justify-content:space-between;gap:16px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--accent);font-size:24px;line-height:1;transition:transform .3s}
+  details[open] summary::after{transform:rotate(45deg)}
+  details p{color:var(--muted);margin:12px 0 0;max-width:760px}
+
+  .final{position:relative;text-align:center;border:1px solid var(--line-2);border-radius:28px;padding:80px 24px;overflow:hidden;background:radial-gradient(ellipse 70% 80% at 50% 0%,rgba(255,106,61,.22),transparent 70%),var(--card)}
+  .final h2,.final .sub{margin-inline:auto}
+  form{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px}
+  input{padding:13px 16px;border-radius:12px;border:1px solid var(--line-2);background:var(--bg);color:var(--fg);font:inherit;font-size:15px;flex:0 1 240px;min-width:0;outline:none;transition:border-color .2s}
+  @media (max-width:600px){input{flex:1 1 100%}}
+  input:focus{border-color:var(--accent)}
+  input::placeholder{color:var(--dim)}
+  .fine{font-size:13px;color:var(--dim);margin-top:18px}
+  footer{padding:48px 0 100px;color:var(--dim);font-size:14px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line);margin-top:40px}
+
+  /* Revelação ao rolar */
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+  .reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .reveal{opacity:1;transform:none;transition:none}
+    .orb{transform:none!important}
+    *{animation:none!important}
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"></div>
+<div class="ambient" aria-hidden="true"><div class="grid-bg"></div><div class="orb a"></div><div class="orb b"></div></div>
+
+<nav class="rail" aria-label="Progresso da página">
+  <a href="#topo"><i></i><span>Início</span></a>
+  <a href="#problema"><i></i><span>O problema</span></a>
+  <a href="#qualidade"><i></i><span>Qualidade</span></a>
+  <a href="#solucao"><i></i><span>A solução</span></a>
+  <a href="#padrao"><i></i><span>O padrão</span></a>
+  <a href="#compatibilidade"><i></i><span>Compatibilidade</span></a>
+  <a href="#como"><i></i><span>Como funciona</span></a>
+  <a href="#faq"><i></i><span>FAQ</span></a>
+  <a href="#contato"><i></i><span>Contato</span></a>
+</nav>
+
+<div class="float-cta" aria-hidden="true">
+  <span class="ring"></span>
+  <span class="txt">Pronto para padronizar sua IA?</span>
+  <a class="btn sm" href="#contato" tabindex="-1">Agendar diagnóstico</a>
+</div>
+
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="#topo"><b>S</b>Skillhub</a>
+    <nav>
+      <a href="#problema">O problema</a>
+      <a href="#qualidade">Qualidade</a>
+      <a href="#solucao">Solução</a>
+      <a href="#compatibilidade">Compatibilidade</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn sm" href="#contato">Agendar diagnóstico</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="hero" id="topo">
+      <span class="tag reveal">Sistematize os processos de IA da sua empresa</span>
+      <h1 class="reveal d1">Sua empresa já usa IA.<br><span class="gt">Cada pessoa usa de um jeito.</span></h1>
+      <p class="lead reveal d2">O resultado é retrabalho, respostas inconsistentes e conhecimento que some quando alguém sai. Skills de alta qualidade transformam o jeito certo de trabalhar do seu time em algo que a IA executa igual, sempre.</p>
+      <div class="cta reveal d3">
+        <a class="btn" href="#contato">Agendar diagnóstico gratuito →</a>
+        <a class="btn ghost" href="#problema">Entender o problema</a>
+      </div>
+
+      <div class="compat reveal">
+        <p>Compatível com as ferramentas que seu time já usa</p>
+        <div class="logos">
+          <span class="brand"><img src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjFlbSIgc3R5bGU9ImZsZXg6bm9uZTtsaW5lLWhlaWdodDoxIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIxZW0iIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHRpdGxlPkNsYXVkZSBDb2RlPC90aXRsZT48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMC45OTggMTAuOTQ5SDI0djMuMTAyaC0zdjMuMDI4aC0xLjQ4N1YyMEgxOHYtMi45MjFoLTEuNDg3VjIwSDE1di0yLjkyMUg5VjIwSDcuNDg4di0yLjkyMUg2VjIwSDQuNDg3di0yLjkyMUgzVjE0LjA1SDBWMTAuOTVoM1Y1aDE3Ljk5OHY1Ljk0OXpNNiAxMC45NDloMS40ODhWOC4xMDJINnYyLjg0N3ptMTAuNTEgMEgxOFY4LjEwMmgtMS40OXYyLjg0N3oiIGZpbGw9IiNEOTc3NTciIGZpbGwtcnVsZT0iZXZlbm9kZCI+PC9wYXRoPjwvc3ZnPg==" alt="">Claude Code</span>
+          <span class="brand"><img src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjFlbSIgc3R5bGU9ImZsZXg6bm9uZTtsaW5lLWhlaWdodDoxIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIxZW0iIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHRpdGxlPkNvZGV4PC90aXRsZT48cGF0aCBkPSJNMTkuNTAzIDBINC40OTZBNC40OTYgNC40OTYgMCAwMDAgNC40OTZ2MTUuMDA3QTQuNDk2IDQuNDk2IDAgMDA0LjQ5NiAyNGgxNS4wMDdBNC40OTYgNC40OTYgMCAwMDI0IDE5LjUwM1Y0LjQ5NkE0LjQ5NiA0LjQ5NiAwIDAwMTkuNTAzIDB6IiBmaWxsPSIjZmZmIj48L3BhdGg+PHBhdGggZD0iTTkuMDY0IDMuMzQ0YTQuNTc4IDQuNTc4IDAgMDEyLjI4NS0uMzEyYzEgLjExNSAxLjg5MS41NCAyLjY3MyAxLjI3NS4wMS4wMS4wMjQuMDE3LjAzNy4wMjFhLjA5LjA5IDAgMDAuMDQzIDAgNC41NSA0LjU1IDAgMDEzLjA0Ni4yNzVsLjA0Ny4wMjIuMTE2LjA1N2E0LjU4MSA0LjU4MSAwIDAxMi4xODggMi4zOTljLjIwOS41MS4zMTMgMS4wNDEuMzE1IDEuNTk1YTQuMjQgNC4yNCAwIDAxLS4xMzQgMS4yMjMuMTIzLjEyMyAwIDAwLjAzLjExNWMuNTk0LjYwNy45ODggMS4zMyAxLjE4MyAyLjE3LjI4OSAxLjQyNS0uMDA3IDIuNzEtLjg4NyAzLjg1NGwtLjEzNi4xNjZhNC41NDggNC41NDggMCAwMS0yLjIwMSAxLjM4OC4xMjMuMTIzIDAgMDAtLjA4MS4wNzZjLS4xOTEuNTUxLS4zODMgMS4wMjMtLjc0IDEuNDk0LS45IDEuMTg3LTIuMjIyIDEuODQ2LTMuNzExIDEuODM4LTEuMTg3LS4wMDYtMi4yMzktLjQ0LTMuMTU3LTEuMzAyYS4xMDcuMTA3IDAgMDAtLjEwNS0uMDI0Yy0uMzg4LjEyNS0uNzguMTQzLTEuMjA0LjEzOGE0LjQ0MSA0LjQ0MSAwIDAxLTEuOTQ1LS40NjYgNC41NDQgNC41NDQgMCAwMS0xLjYxLTEuMzM1Yy0uMTUyLS4yMDItLjMwMy0uMzkyLS40MTQtLjYxN2E1LjgxIDUuODEgMCAwMS0uMzctLjk2MSA0LjU4MiA0LjU4MiAwIDAxLS4wMTQtMi4yOTguMTI0LjEyNCAwIDAwLjAwNi0uMDU2LjA4NS4wODUgMCAwMC0uMDI3LS4wNDggNC40NjcgNC40NjcgMCAwMS0xLjAzNC0xLjY1MSAzLjg5NiAzLjg5NiAwIDAxLS4yNTEtMS4xOTIgNS4xODkgNS4xODkgMCAwMS4xNDEtMS42Yy4zMzctMS4xMTIuOTgyLTEuOTg1IDEuOTMzLTIuNjE4LjIxMi0uMTQxLjQxMy0uMjUxLjYwMS0uMzMuMjE1LS4wODkuNDMtLjE2NC42NDYtLjIyN2EuMDk4LjA5OCAwIDAwLjA2NS0uMDY2IDQuNTEgNC41MSAwIDAxLjgyOS0xLjYxNSA0LjUzNSA0LjUzNSAwIDAxMS44MzctMS4zODh6bTMuNDgyIDEwLjU2NWEuNjM3LjYzNyAwIDAwMCAxLjI3MmgzLjYzNmEuNjM3LjYzNyAwIDEwMC0xLjI3MmgtMy42MzZ6TTguNDYyIDkuMjNhLjYzNy42MzcgMCAwMC0xLjEwNi42MzFsMS4yNzIgMi4yMjQtMS4yNjYgMi4xMzZhLjYzNi42MzYgMCAxMDEuMDk1LjY0OWwxLjQ1NC0yLjQ1NWEuNjM2LjYzNiAwIDAwLjAwNS0uNjRMOC40NjIgOS4yM3oiIGZpbGw9InVybCgjbG9iZS1pY29ucy1jb2RleC1fUl8wXykiPjwvcGF0aD48ZGVmcz48bGluZWFyR3JhZGllbnQgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGlkPSJsb2JlLWljb25zLWNvZGV4LV9SXzBfIiB4MT0iMTIiIHgyPSIxMiIgeTE9IjMiIHkyPSIyMSI+PHN0b3Agc3RvcC1jb2xvcj0iI0IxQTdGRiI+PC9zdG9wPjxzdG9wIG9mZnNldD0iLjUiIHN0b3AtY29sb3I9IiM3QTlERkYiPjwvc3RvcD48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzOTQxRkYiPjwvc3RvcD48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48L3N2Zz4=" alt="">Codex</span>
+          <span class="brand"><img src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjFlbSIgc3R5bGU9ImZsZXg6bm9uZTtsaW5lLWhlaWdodDoxIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIxZW0iIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHRpdGxlPkFudGlncmF2aXR5PC90aXRsZT48bWFzayBoZWlnaHQ9IjIzIiBpZD0ibG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0wLV9SXzBfIiBtYXNrVW5pdHM9InVzZXJTcGFjZU9uVXNlIiB3aWR0aD0iMjQiIHg9IjAiIHk9IjEiPjxwYXRoIGQ9Ik0yMS43NTEgMjIuNjA3YzEuMzQgMS4wMDUgMy4zNS4zMzUgMS41MDgtMS41MDhDMTcuNzMgMTUuNzQgMTguOTA0IDEgMTIuMDM3IDEgNS4xNyAxIDYuMzQyIDE1Ljc0LjgxNSAyMS4xYy0yLjAxIDIuMDA5LjE2NyAyLjUxMSAxLjUwNyAxLjUwNiA1LjE5Mi0zLjUxNyA0Ljg1Ny05LjcxNCA5LjcxNS05LjcxNCA0Ljg1NyAwIDQuNTIyIDYuMTk3IDkuNzE0IDkuNzE1eiIgZmlsbD0iI2ZmZiI+PC9wYXRoPjwvbWFzaz48ZyBtYXNrPSJ1cmwoI2xvYmUtaWNvbnMtYW50aWdyYXZpdHktMC1fUl8wXykiPjxnIGZpbHRlcj0idXJsKCNsb2JlLWljb25zLWFudGlncmF2aXR5LTEtX1JfMF8pIj48cGF0aCBkPSJNLTEuMDE4LTMuOTkyYy0uNDA4IDMuNTkxIDIuNjg2IDYuODkgNi45MSA3LjM3IDQuMjI1LjQ4IDcuOTgtMi4wNDMgOC4zODctNS42MzMuNDA4LTMuNTktMi42ODYtNi44OS02LjkxLTcuMzctNC4yMjUtLjQ3OS03Ljk4IDIuMDQzLTguMzg3IDUuNjMzeiIgZmlsbD0iI0ZGRTQzMiI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0yLV9SXzBfKSI+PHBhdGggZD0iTTE1LjI2OSA3Ljc0N2MxLjA1OCA0LjU1NyA1LjY5MSA3LjM3NCAxMC4zNDggNi4yOTMgNC42NTctMS4wODIgNy41NzUtNS42NTMgNi41MTYtMTAuMjEtMS4wNTgtNC41NTYtNS42OTEtNy4zNzQtMTAuMzQ4LTYuMjkyLTQuNjU3IDEuMDgyLTcuNTc1IDUuNjUzLTYuNTE2IDEwLjIxeiIgZmlsbD0iI0ZDNDEzRCI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0zLV9SXzBfKSI+PHBhdGggZD0iTS0xMi40NDMgMTAuODA0YzEuMzM4IDQuNzAzIDcuMzYgNy4xMSAxMy40NTMgNS4zNzggNi4wOTItMS43MzMgOS45NDctNi45NSA4LjYxLTExLjY1MkM4LjI4Mi0uMTczIDIuMjYtMi41OC0zLjgzMy0uODQ4LTkuOTI1Ljg4NC0xMy43OCA2LjEtMTIuNDQzIDEwLjgwNHoiIGZpbGw9IiMwMEI5NUMiPjwvcGF0aD48L2c+PGcgZmlsdGVyPSJ1cmwoI2xvYmUtaWNvbnMtYW50aWdyYXZpdHktNC1fUl8wXykiPjxwYXRoIGQ9Ik0tMTIuNDQzIDEwLjgwNGMxLjMzOCA0LjcwMyA3LjM2IDcuMTEgMTMuNDUzIDUuMzc4IDYuMDkyLTEuNzMzIDkuOTQ3LTYuOTUgOC42MS0xMS42NTJDOC4yODItLjE3MyAyLjI2LTIuNTgtMy44MzMtLjg0OC05LjkyNS44ODQtMTMuNzggNi4xLTEyLjQ0MyAxMC44MDR6IiBmaWxsPSIjMDBCOTVDIj48L3BhdGg+PC9nPjxnIGZpbHRlcj0idXJsKCNsb2JlLWljb25zLWFudGlncmF2aXR5LTUtX1JfMF8pIj48cGF0aCBkPSJNLTcuNjA4IDE0LjcwM2MzLjM1MiAzLjQyNCA5LjEyNiAzLjIwOCAxMi44OTYtLjQ4MyAzLjc3LTMuNjkgNC4xMDgtOS40NTkuNzU2LTEyLjg4M0MyLjY5LTIuMDg3LTMuMDgzLTEuODcxLTYuODUzIDEuODJjLTMuNzcgMy42OS00LjEwOCA5LjQ1OC0uNzU1IDEyLjg4M3oiIGZpbGw9IiMwMEI5NUMiPjwvcGF0aD48L2c+PGcgZmlsdGVyPSJ1cmwoI2xvYmUtaWNvbnMtYW50aWdyYXZpdHktNi1fUl8wXykiPjxwYXRoIGQ9Ik05LjkzMiAyNy42MTdjMS4wNCA0LjQ4MiA1LjM4NCA3LjMwMyA5LjcgNi4zIDQuMzE2LTEuMDAyIDYuOTcxLTUuNDQ4IDUuOTMtOS45My0xLjA0LTQuNDgzLTUuMzg0LTcuMzA0LTkuNy02LjMwMS00LjMxNiAxLjAwMi02Ljk3MSA1LjQ0OC01LjkzIDkuOTN6IiBmaWxsPSIjMzE4NkZGIj48L3BhdGg+PC9nPjxnIGZpbHRlcj0idXJsKCNsb2JlLWljb25zLWFudGlncmF2aXR5LTctX1JfMF8pIj48cGF0aCBkPSJNMi41NzItOC4xODVDLjM5Mi0zLjMyOSAyLjc3OCAyLjQ3MiA3LjkgNC43NzFjNS4xMjIgMi4zIDExLjA0Mi4yMjcgMTMuMjIyLTQuNjMgMi4xOC00Ljg1NS0uMjA1LTEwLjY1Ni01LjMyNy0xMi45NTUtNS4xMjItMi4zLTExLjA0Mi0uMjI3LTEzLjIyMiA0LjYzeiIgZmlsbD0iI0ZCQkMwNCI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS04LV9SXzBfKSI+PHBhdGggZD0iTS0zLjI2NyAzOC42ODZjLTUuMjc3LTIuMDcyIDMuNzQyLTE5LjExNyA1Ljk4NC0yNC44MyAyLjI0My01LjcxMiA4LjM0LTguNjY0IDEzLjYxNi02LjU5MiA1LjI3OCAyLjA3MSAxMS41MzMgMTMuNDgyIDkuMjkgMTkuMTk1LTIuMjQyIDUuNzEzLTIzLjYxMyAxNC4yOTgtMjguODkgMTIuMjI3eiIgZmlsbD0iIzMxODZGRiI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS05LV9SXzBfKSI+PHBhdGggZD0iTTI4LjcxIDE3LjQ3MWMtMS40MTMgMS42NDktNS4xLjgwOC04LjIzNi0xLjg3OC0zLjEzNS0yLjY4Ny00LjUzMS02LjIwMS0zLjExOC03Ljg1IDEuNDEyLTEuNjQ5IDUuMS0uODA4IDguMjM1IDEuODc4czQuNTMyIDYuMiAzLjExOSA3Ljg1eiIgZmlsbD0iIzc0OUJGRiI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0xMC1fUl8wXykiPjxwYXRoIGQ9Ik0xOC4xNjMgOS4wNzdjNS44MSAzLjkzIDEyLjUwMiA0LjE5IDE0Ljk0Ni41NzcgMi40NDMtMy42MTItLjI4Ny05LjcyNy02LjA5OC0xMy42NTgtNS44MS0zLjkzMS0xMi41MDItNC4xOS0xNC45NDYtLjU3Ny0yLjQ0MyAzLjYxMi4yODcgOS43MjcgNi4wOTggMTMuNjU4eiIgZmlsbD0iI0ZDNDEzRCI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0xMS1fUl8wXykiPjxwYXRoIGQ9Ik0tLjkxNSAyLjY4NGMtMS40NCAzLjQ3My0uOTcgNi45NjcgMS4wNSA3LjgwNCAyLjAyLjgzNyA0LjgyNC0xLjMgNi4yNjQtNC43NzIgMS40NC0zLjQ3My45Ny02Ljk2Ny0xLjA1LTcuODA0LTIuMDItLjgzNy00LjgyNCAxLjMtNi4yNjQgNC43NzJ6IiBmaWxsPSIjRkZFRTQ4Ij48L3BhdGg+PC9nPjwvZz48ZGVmcz48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjE3LjU4NyIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktMS1fUl8wXyIgd2lkdGg9IjE5LjgzOCIgeD0iLTMuMjg4IiB5PSItMTEuOTE3Ij48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSIxLjExNyI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjM4LjU2NSIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktMi1fUl8wXyIgd2lkdGg9IjM4LjkiIHg9IjQuMjUxIiB5PSItMTMuNDkzIj48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSI1LjQiPjwvZmVHYXVzc2lhbkJsdXI+PC9maWx0ZXI+PGZpbHRlciBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgaGVpZ2h0PSIzNi41MTciIGlkPSJsb2JlLWljb25zLWFudGlncmF2aXR5LTMtX1JfMF8iIHdpZHRoPSI0MC45NTUiIHg9Ii0yMS44ODkiIHk9Ii0xMC41OTIiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ij48L2ZlRmxvb2Q+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIj48L2ZlQmxlbmQ+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl85NzdfMTE1IiBzdGREZXZpYXRpb249IjQuNTkxIj48L2ZlR2F1c3NpYW5CbHVyPjwvZmlsdGVyPjxmaWx0ZXIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIGhlaWdodD0iMzYuNTE3IiBpZD0ibG9iZS1pY29ucy1hbnRpZ3Jhdml0eS00LV9SXzBfIiB3aWR0aD0iNDAuOTU1IiB4PSItMjEuODg5IiB5PSItMTAuNTkyIj48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSI0LjU5MSI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjM2LjU5NSIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktNS1fUl8wXyIgd2lkdGg9IjM2LjYzMiIgeD0iLTE5LjA5OSIgeT0iLTEwLjI3OCI+PGZlRmxvb2QgZmxvb2Qtb3BhY2l0eT0iMCIgcmVzdWx0PSJCYWNrZ3JvdW5kSW1hZ2VGaXgiPjwvZmVGbG9vZD48ZmVCbGVuZCBpbj0iU291cmNlR3JhcGhpYyIgaW4yPSJCYWNrZ3JvdW5kSW1hZ2VGaXgiIHJlc3VsdD0ic2hhcGUiPjwvZmVCbGVuZD48ZmVHYXVzc2lhbkJsdXIgcmVzdWx0PSJlZmZlY3QxX2ZvcmVncm91bmRCbHVyXzk3N18xMTUiIHN0ZERldmlhdGlvbj0iNC41OTEiPjwvZmVHYXVzc2lhbkJsdXI+PC9maWx0ZXI+PGZpbHRlciBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgaGVpZ2h0PSIzNC4wODciIGlkPSJsb2JlLWljb25zLWFudGlncmF2aXR5LTYtX1JfMF8iIHdpZHRoPSIzMy41MzMiIHg9Ii45ODEiIHk9IjguNzU4Ij48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSI0LjM2MyI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjM1LjI3NiIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktNy1fUl8wXyIgd2lkdGg9IjM1Ljk3OCIgeD0iLTYuMTQzIiB5PSItMjEuNjU5Ij48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSIzLjk1NCI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjQ2LjUyMyIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktOC1fUl8wXyIgd2lkdGg9IjQ1LjExNCIgeD0iLTExLjk2IiB5PSItLjQ2Ij48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSIzLjUzMSI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjI0LjA1NCIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktOS1fUl8wXyIgd2lkdGg9IjI1LjA5NCIgeD0iMTAuNDg1IiB5PSIuNTgiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ij48L2ZlRmxvb2Q+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIj48L2ZlQmxlbmQ+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl85NzdfMTE1IiBzdGREZXZpYXRpb249IjMuMTU5Ij48L2ZlR2F1c3NpYW5CbHVyPjwvZmlsdGVyPjxmaWx0ZXIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIGhlaWdodD0iMzAuMDA3IiBpZD0ibG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0xMC1fUl8wXyIgd2lkdGg9IjMzLjUwOCIgeD0iNS44MzMiIHk9Ii0xMi40NjciPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ij48L2ZlRmxvb2Q+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIj48L2ZlQmxlbmQ+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl85NzdfMTE1IiBzdGREZXZpYXRpb249IjIuNjY5Ij48L2ZlR2F1c3NpYW5CbHVyPjwvZmlsdGVyPjxmaWx0ZXIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIGhlaWdodD0iMjYuMTUxIiBpZD0ibG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0xMS1fUl8wXyIgd2lkdGg9IjIyLjE5NCIgeD0iLTguMzU1IiB5PSItOC44NzYiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ij48L2ZlRmxvb2Q+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIj48L2ZlQmxlbmQ+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl85NzdfMTE1IiBzdGREZXZpYXRpb249IjMuMzAzIj48L2ZlR2F1c3NpYW5CbHVyPjwvZmlsdGVyPjwvZGVmcz48L3N2Zz4=" alt="">Antigravity</span>
+        </div>
+      </div>
+
+      <div class="term reveal">
+        <div class="term-top">
+          <span class="d"></span><span class="d"></span><span class="d"></span>
+          <div class="tabs" role="tablist">
+            <button class="on" data-i="0">Claude Code</button>
+            <button data-i="1">Codex</button>
+            <button data-i="2">Antigravity</button>
+          </div>
+        </div>
+        <pre id="termOut"></pre>
+      </div>
+    </section>
+
+    <section id="problema">
+      <div class="eyebrow reveal">01 · O problema</div>
+      <h2 class="reveal">A IA não falha por falta de inteligência. <span class="gt">Falha por falta de contexto.</span></h2>
+      <p class="sub reveal">Você comprou as licenças, fez o treinamento e liberou para o time. Mesmo assim, você provavelmente já ouviu alguma destas frases:</p>
+      <div class="grid">
+        <div class="card reveal"><div class="quote">A IA não conhece nosso processo.</div><p>Toda conversa começa do zero. O time gasta mais tempo explicando o contexto do que a IA economiza fazendo o trabalho.</p></div>
+        <div class="card reveal d1"><div class="quote">Cada um tem seu prompt mágico.</div><p>O melhor jeito de usar a IA mora no bloco de notas de duas ou três pessoas. O resto do time fica com resultados medianos.</p></div>
+        <div class="card reveal d2"><div class="quote">Ficou bonito, mas está errado.</div><p>A resposta parece profissional, mas ignora sua política, usa o modelo de documento antigo ou erra um cálculo. Alguém precisa revisar tudo.</p></div>
+        <div class="card reveal d3"><div class="quote">Quem sabia fazer isso saiu.</div><p>O conhecimento operacional continua preso em pessoas, e não em sistemas. A IA não herda o que ninguém escreveu.</p></div>
+      </div>
+      <div class="cost reveal">
+        <div><strong>Horas perdidas</strong><span>reexplicando contexto e corrigindo saídas que deveriam vir certas</span></div>
+        <div><strong>Risco operacional</strong><span>documentos, análises e respostas a clientes fora do padrão da empresa</span></div>
+        <div><strong>ROI que não aparece</strong><span>licenças pagas, adoção alta e quase nenhum ganho mensurável</span></div>
+        <div><strong>Conhecimento frágil</strong><span>o melhor jeito de trabalhar não é documentado, versionado nem compartilhado</span></div>
+      </div>
+    </section>
+
+    <section id="qualidade">
+      <div class="eyebrow reveal">02 · Por que qualidade importa</div>
+      <h2 class="reveal">Uma skill ruim é só um prompt longo. <span class="gt">Uma skill boa é um processo que funciona.</span></h2>
+      <p class="sub reveal">Skills ensinam a IA a executar uma tarefa do jeito da sua empresa. A diferença entre uma skill genérica e uma de alta qualidade é a diferença entre "ajuda às vezes" e "dá para confiar".</p>
+
+      <div class="compare">
+        <div class="col bad reveal">
+          <div class="lbl">Skill genérica</div>
+          <h3>Parece que resolve</h3>
+          <ul>
+            <li>Instruções vagas como "seja profissional" e "seja detalhado"</li>
+            <li>Funciona na demonstração e quebra no caso real</li>
+            <li>Ninguém sabe se a versão nova ficou melhor ou pior</li>
+            <li>Não sabe quando parar e pedir ajuda; inventa</li>
+            <li>Pode acessar dados ou executar ações sem controle</li>
+            <li>Gasta tokens repetindo contexto e refazendo respostas</li>
+          </ul>
+        </div>
+        <div class="col good reveal d1">
+          <div class="lbl">Skill de alta qualidade</div>
+          <h3>Resultado previsível</h3>
+          <ul>
+            <li>Regras concretas, exemplos reais e o modelo oficial da empresa</li>
+            <li>Testada contra casos difíceis antes de chegar ao time</li>
+            <li>Versionada e avaliada: cada mudança é medida</li>
+            <li>Sabe os próprios limites e sinaliza quando falta informação</li>
+            <li>Permissões explícitas, revisadas e auditáveis</li>
+            <li>Carrega só o contexto necessário: menos tokens, output melhor</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="example">
+        <div class="card reveal">
+          <p class="cap">✕ proposta-comercial / genérica</p>
+<pre>Escreva uma proposta comercial
+profissional e persuasiva para
+o cliente.</pre>
+        </div>
+        <div class="card reveal d1">
+          <p class="cap">✓ proposta-comercial / alta qualidade</p>
+<pre>1. Use o modelo <span class="hl">/templates/proposta-v4</span>
+2. Puxe preços apenas da tabela vigente;
+   nunca estime valores
+3. Desconto acima de <span class="hl">15%</span> → sinalize para
+   aprovação do gerente
+4. Inclua o SLA do plano contratado
+5. Se faltar CNPJ ou escopo, <span class="hl">pergunte</span>
+   antes de escrever
+6. Valide com o checklist jurídico</pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="solucao">
+      <div class="eyebrow reveal">03 · A solução</div>
+      <h2 class="reveal">Uma plataforma para toda a empresa: <span class="gt">o mesmo padrão de IA para todos, sempre.</span></h2>
+      <p class="sub reveal">Não é só um catálogo de prompts. É a estrutura para a IA trabalhar do jeito da sua empresa, com qualidade que dá para medir.</p>
+      <div class="bento">
+        <div class="card wide reveal">
+          <div class="ico">⟳</div>
+          <h3>Sistematize os processos de IA da sua empresa</h3>
+          <p>Transforme tarefas recorrentes em fluxos padronizados. Cada área passa a usar a IA do mesmo jeito, com o mesmo nível de qualidade, independentemente de quem está operando.</p>
+          <div class="viz flow"><span class="on">proposta-comercial</span><b>→</b><span class="on">relatorio-mensal</span><b>→</b><span>analise-de-contrato</span><b>→</b><span>atendimento-n2</span><b>→</b><span>onboarding-rh</span></div>
+        </div>
+        <div class="card reveal d1">
+          <div class="ico">▤</div>
+          <h3>Repositório de skills de alta qualidade</h3>
+          <p>Uma biblioteca curada, pronta para adaptar ao seu contexto: seus modelos, suas regras, seu vocabulário.</p>
+          <ul class="viz repo"><li>financeiro/fechamento <em>adaptada</em></li><li>juridico/revisao-nda <em>adaptada</em></li><li>vendas/follow-up <em>adaptada</em></li></ul>
+        </div>
+        <div class="card reveal">
+          <div class="ico">◎</div>
+          <h3>Capacite sua equipe a usar IA do jeito certo</h3>
+          <p>Treinamento prático com as skills da sua própria empresa. O time aprende quando usar, como pedir e como revisar, e para de depender de dois ou três especialistas.</p>
+        </div>
+        <div class="card reveal d1">
+          <div class="ico">⚡</div>
+          <h3>Otimize seus tokens e melhore o output</h3>
+          <p>Skills carregam só o contexto necessário, na hora certa. Menos reexplicação, menos tentativas e respostas melhores desde a primeira vez.</p>
+          <div class="viz bars">
+            <div class="row">sem skill: contexto repetido + retrabalho<div class="track"><div class="b no"></div></div></div>
+            <div class="row">com skill: contexto sob medida<div class="track"><div class="b yes"></div></div></div>
+          </div>
+        </div>
+        <div class="card reveal d2">
+          <div class="ico">✓</div>
+          <h3>Garanta que o trabalho das suas IAs seja confiável</h3>
+          <p>Testes, revisão e histórico de versões para cada skill. Você sabe o que a IA faz, com quais permissões e com que qualidade.</p>
+          <ul class="viz checks"><li>casos de teste aprovados</li><li>permissões revisadas</li><li>histórico auditável</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="padrao">
+      <div class="eyebrow reveal">04 · O padrão Skillhub</div>
+      <h2 class="reveal">O que torna uma skill digna de produção</h2>
+      <p class="sub reveal">Toda skill no Skillhub passa pelos mesmos critérios antes de ser liberada para o seu time.</p>
+      <div class="grid">
+        <div class="card pillar reveal"><span class="num">/01</span><h3>Específica</h3><p>Resolve uma tarefa bem definida, com o vocabulário, os modelos e as regras do seu negócio.</p></div>
+        <div class="card pillar reveal d1"><span class="num">/02</span><h3>Testada</h3><p>Avaliada com casos reais e casos de borda. Você vê o desempenho antes de adotar.</p></div>
+        <div class="card pillar reveal d2"><span class="num">/03</span><h3>Segura</h3><p>Permissões mínimas e declaradas. Verificação automática e revisão humana antes da publicação.</p></div>
+        <div class="card pillar reveal d3"><span class="num">/04</span><h3>Viva</h3><p>Versionada, com histórico de mudanças. Quando o processo muda, a skill muda junto, para todos.</p></div>
+      </div>
+    </section>
+
+    <section id="compatibilidade">
+      <div class="eyebrow reveal">05 · Compatibilidade</div>
+      <h2 class="reveal">Escreva uma vez. <span class="gt">Rode em qualquer ferramenta.</span></h2>
+      <p class="sub reveal">Seu time não precisa trocar de ferramenta, e você não fica preso a um fornecedor. A mesma skill funciona nos principais ambientes de agentes de IA.</p>
+      <div class="tools">
+        <div class="card tool reveal">
+          <div class="head"><img src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjFlbSIgc3R5bGU9ImZsZXg6bm9uZTtsaW5lLWhlaWdodDoxIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIxZW0iIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHRpdGxlPkNsYXVkZSBDb2RlPC90aXRsZT48cGF0aCBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yMC45OTggMTAuOTQ5SDI0djMuMTAyaC0zdjMuMDI4aC0xLjQ4N1YyMEgxOHYtMi45MjFoLTEuNDg3VjIwSDE1di0yLjkyMUg5VjIwSDcuNDg4di0yLjkyMUg2VjIwSDQuNDg3di0yLjkyMUgzVjE0LjA1SDBWMTAuOTVoM1Y1aDE3Ljk5OHY1Ljk0OXpNNiAxMC45NDloMS40ODhWOC4xMDJINnYyLjg0N3ptMTAuNTEgMEgxOFY4LjEwMmgtMS40OXYyLjg0N3oiIGZpbGw9IiNEOTc3NTciIGZpbGwtcnVsZT0iZXZlbm9kZCI+PC9wYXRoPjwvc3ZnPg==" alt=""><strong>Claude Code</strong></div>
+          <p>Para times de engenharia e operações que trabalham no terminal ou na IDE com o Claude.</p>
+          <code>$ skillhub install proposta-comercial --target claude</code>
+        </div>
+        <div class="card tool reveal d1">
+          <div class="head"><img src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjFlbSIgc3R5bGU9ImZsZXg6bm9uZTtsaW5lLWhlaWdodDoxIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIxZW0iIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHRpdGxlPkNvZGV4PC90aXRsZT48cGF0aCBkPSJNMTkuNTAzIDBINC40OTZBNC40OTYgNC40OTYgMCAwMDAgNC40OTZ2MTUuMDA3QTQuNDk2IDQuNDk2IDAgMDA0LjQ5NiAyNGgxNS4wMDdBNC40OTYgNC40OTYgMCAwMDI0IDE5LjUwM1Y0LjQ5NkE0LjQ5NiA0LjQ5NiAwIDAwMTkuNTAzIDB6IiBmaWxsPSIjZmZmIj48L3BhdGg+PHBhdGggZD0iTTkuMDY0IDMuMzQ0YTQuNTc4IDQuNTc4IDAgMDEyLjI4NS0uMzEyYzEgLjExNSAxLjg5MS41NCAyLjY3MyAxLjI3NS4wMS4wMS4wMjQuMDE3LjAzNy4wMjFhLjA5LjA5IDAgMDAuMDQzIDAgNC41NSA0LjU1IDAgMDEzLjA0Ni4yNzVsLjA0Ny4wMjIuMTE2LjA1N2E0LjU4MSA0LjU4MSAwIDAxMi4xODggMi4zOTljLjIwOS41MS4zMTMgMS4wNDEuMzE1IDEuNTk1YTQuMjQgNC4yNCAwIDAxLS4xMzQgMS4yMjMuMTIzLjEyMyAwIDAwLjAzLjExNWMuNTk0LjYwNy45ODggMS4zMyAxLjE4MyAyLjE3LjI4OSAxLjQyNS0uMDA3IDIuNzEtLjg4NyAzLjg1NGwtLjEzNi4xNjZhNC41NDggNC41NDggMCAwMS0yLjIwMSAxLjM4OC4xMjMuMTIzIDAgMDAtLjA4MS4wNzZjLS4xOTEuNTUxLS4zODMgMS4wMjMtLjc0IDEuNDk0LS45IDEuMTg3LTIuMjIyIDEuODQ2LTMuNzExIDEuODM4LTEuMTg3LS4wMDYtMi4yMzktLjQ0LTMuMTU3LTEuMzAyYS4xMDcuMTA3IDAgMDAtLjEwNS0uMDI0Yy0uMzg4LjEyNS0uNzguMTQzLTEuMjA0LjEzOGE0LjQ0MSA0LjQ0MSAwIDAxLTEuOTQ1LS40NjYgNC41NDQgNC41NDQgMCAwMS0xLjYxLTEuMzM1Yy0uMTUyLS4yMDItLjMwMy0uMzkyLS40MTQtLjYxN2E1LjgxIDUuODEgMCAwMS0uMzctLjk2MSA0LjU4MiA0LjU4MiAwIDAxLS4wMTQtMi4yOTguMTI0LjEyNCAwIDAwLjAwNi0uMDU2LjA4NS4wODUgMCAwMC0uMDI3LS4wNDggNC40NjcgNC40NjcgMCAwMS0xLjAzNC0xLjY1MSAzLjg5NiAzLjg5NiAwIDAxLS4yNTEtMS4xOTIgNS4xODkgNS4xODkgMCAwMS4xNDEtMS42Yy4zMzctMS4xMTIuOTgyLTEuOTg1IDEuOTMzLTIuNjE4LjIxMi0uMTQxLjQxMy0uMjUxLjYwMS0uMzMuMjE1LS4wODkuNDMtLjE2NC42NDYtLjIyN2EuMDk4LjA5OCAwIDAwLjA2NS0uMDY2IDQuNTEgNC41MSAwIDAxLjgyOS0xLjYxNSA0LjUzNSA0LjUzNSAwIDAxMS44MzctMS4zODh6bTMuNDgyIDEwLjU2NWEuNjM3LjYzNyAwIDAwMCAxLjI3MmgzLjYzNmEuNjM3LjYzNyAwIDEwMC0xLjI3MmgtMy42MzZ6TTguNDYyIDkuMjNhLjYzNy42MzcgMCAwMC0xLjEwNi42MzFsMS4yNzIgMi4yMjQtMS4yNjYgMi4xMzZhLjYzNi42MzYgMCAxMDEuMDk1LjY0OWwxLjQ1NC0yLjQ1NWEuNjM2LjYzNiAwIDAwLjAwNS0uNjRMOC40NjIgOS4yM3oiIGZpbGw9InVybCgjbG9iZS1pY29ucy1jb2RleC1fUl8wXykiPjwvcGF0aD48ZGVmcz48bGluZWFyR3JhZGllbnQgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIGlkPSJsb2JlLWljb25zLWNvZGV4LV9SXzBfIiB4MT0iMTIiIHgyPSIxMiIgeTE9IjMiIHkyPSIyMSI+PHN0b3Agc3RvcC1jb2xvcj0iI0IxQTdGRiI+PC9zdG9wPjxzdG9wIG9mZnNldD0iLjUiIHN0b3AtY29sb3I9IiM3QTlERkYiPjwvc3RvcD48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMzOTQxRkYiPjwvc3RvcD48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48L3N2Zz4=" alt=""><strong>Codex</strong></div>
+          <p>Para times que usam o agente de código da OpenAI, na linha de comando ou na nuvem.</p>
+          <code>$ skillhub install proposta-comercial --target codex</code>
+        </div>
+        <div class="card tool reveal d2">
+          <div class="head"><img src="data:image/svg+xml;base64,PHN2ZyBoZWlnaHQ9IjFlbSIgc3R5bGU9ImZsZXg6bm9uZTtsaW5lLWhlaWdodDoxIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIxZW0iIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHRpdGxlPkFudGlncmF2aXR5PC90aXRsZT48bWFzayBoZWlnaHQ9IjIzIiBpZD0ibG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0wLV9SXzBfIiBtYXNrVW5pdHM9InVzZXJTcGFjZU9uVXNlIiB3aWR0aD0iMjQiIHg9IjAiIHk9IjEiPjxwYXRoIGQ9Ik0yMS43NTEgMjIuNjA3YzEuMzQgMS4wMDUgMy4zNS4zMzUgMS41MDgtMS41MDhDMTcuNzMgMTUuNzQgMTguOTA0IDEgMTIuMDM3IDEgNS4xNyAxIDYuMzQyIDE1Ljc0LjgxNSAyMS4xYy0yLjAxIDIuMDA5LjE2NyAyLjUxMSAxLjUwNyAxLjUwNiA1LjE5Mi0zLjUxNyA0Ljg1Ny05LjcxNCA5LjcxNS05LjcxNCA0Ljg1NyAwIDQuNTIyIDYuMTk3IDkuNzE0IDkuNzE1eiIgZmlsbD0iI2ZmZiI+PC9wYXRoPjwvbWFzaz48ZyBtYXNrPSJ1cmwoI2xvYmUtaWNvbnMtYW50aWdyYXZpdHktMC1fUl8wXykiPjxnIGZpbHRlcj0idXJsKCNsb2JlLWljb25zLWFudGlncmF2aXR5LTEtX1JfMF8pIj48cGF0aCBkPSJNLTEuMDE4LTMuOTkyYy0uNDA4IDMuNTkxIDIuNjg2IDYuODkgNi45MSA3LjM3IDQuMjI1LjQ4IDcuOTgtMi4wNDMgOC4zODctNS42MzMuNDA4LTMuNTktMi42ODYtNi44OS02LjkxLTcuMzctNC4yMjUtLjQ3OS03Ljk4IDIuMDQzLTguMzg3IDUuNjMzeiIgZmlsbD0iI0ZGRTQzMiI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0yLV9SXzBfKSI+PHBhdGggZD0iTTE1LjI2OSA3Ljc0N2MxLjA1OCA0LjU1NyA1LjY5MSA3LjM3NCAxMC4zNDggNi4yOTMgNC42NTctMS4wODIgNy41NzUtNS42NTMgNi41MTYtMTAuMjEtMS4wNTgtNC41NTYtNS42OTEtNy4zNzQtMTAuMzQ4LTYuMjkyLTQuNjU3IDEuMDgyLTcuNTc1IDUuNjUzLTYuNTE2IDEwLjIxeiIgZmlsbD0iI0ZDNDEzRCI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0zLV9SXzBfKSI+PHBhdGggZD0iTS0xMi40NDMgMTAuODA0YzEuMzM4IDQuNzAzIDcuMzYgNy4xMSAxMy40NTMgNS4zNzggNi4wOTItMS43MzMgOS45NDctNi45NSA4LjYxLTExLjY1MkM4LjI4Mi0uMTczIDIuMjYtMi41OC0zLjgzMy0uODQ4LTkuOTI1Ljg4NC0xMy43OCA2LjEtMTIuNDQzIDEwLjgwNHoiIGZpbGw9IiMwMEI5NUMiPjwvcGF0aD48L2c+PGcgZmlsdGVyPSJ1cmwoI2xvYmUtaWNvbnMtYW50aWdyYXZpdHktNC1fUl8wXykiPjxwYXRoIGQ9Ik0tMTIuNDQzIDEwLjgwNGMxLjMzOCA0LjcwMyA3LjM2IDcuMTEgMTMuNDUzIDUuMzc4IDYuMDkyLTEuNzMzIDkuOTQ3LTYuOTUgOC42MS0xMS42NTJDOC4yODItLjE3MyAyLjI2LTIuNTgtMy44MzMtLjg0OC05LjkyNS44ODQtMTMuNzggNi4xLTEyLjQ0MyAxMC44MDR6IiBmaWxsPSIjMDBCOTVDIj48L3BhdGg+PC9nPjxnIGZpbHRlcj0idXJsKCNsb2JlLWljb25zLWFudGlncmF2aXR5LTUtX1JfMF8pIj48cGF0aCBkPSJNLTcuNjA4IDE0LjcwM2MzLjM1MiAzLjQyNCA5LjEyNiAzLjIwOCAxMi44OTYtLjQ4MyAzLjc3LTMuNjkgNC4xMDgtOS40NTkuNzU2LTEyLjg4M0MyLjY5LTIuMDg3LTMuMDgzLTEuODcxLTYuODUzIDEuODJjLTMuNzcgMy42OS00LjEwOCA5LjQ1OC0uNzU1IDEyLjg4M3oiIGZpbGw9IiMwMEI5NUMiPjwvcGF0aD48L2c+PGcgZmlsdGVyPSJ1cmwoI2xvYmUtaWNvbnMtYW50aWdyYXZpdHktNi1fUl8wXykiPjxwYXRoIGQ9Ik05LjkzMiAyNy42MTdjMS4wNCA0LjQ4MiA1LjM4NCA3LjMwMyA5LjcgNi4zIDQuMzE2LTEuMDAyIDYuOTcxLTUuNDQ4IDUuOTMtOS45My0xLjA0LTQuNDgzLTUuMzg0LTcuMzA0LTkuNy02LjMwMS00LjMxNiAxLjAwMi02Ljk3MSA1LjQ0OC01LjkzIDkuOTN6IiBmaWxsPSIjMzE4NkZGIj48L3BhdGg+PC9nPjxnIGZpbHRlcj0idXJsKCNsb2JlLWljb25zLWFudGlncmF2aXR5LTctX1JfMF8pIj48cGF0aCBkPSJNMi41NzItOC4xODVDLjM5Mi0zLjMyOSAyLjc3OCAyLjQ3MiA3LjkgNC43NzFjNS4xMjIgMi4zIDExLjA0Mi4yMjcgMTMuMjIyLTQuNjMgMi4xOC00Ljg1NS0uMjA1LTEwLjY1Ni01LjMyNy0xMi45NTUtNS4xMjItMi4zLTExLjA0Mi0uMjI3LTEzLjIyMiA0LjYzeiIgZmlsbD0iI0ZCQkMwNCI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS04LV9SXzBfKSI+PHBhdGggZD0iTS0zLjI2NyAzOC42ODZjLTUuMjc3LTIuMDcyIDMuNzQyLTE5LjExNyA1Ljk4NC0yNC44MyAyLjI0My01LjcxMiA4LjM0LTguNjY0IDEzLjYxNi02LjU5MiA1LjI3OCAyLjA3MSAxMS41MzMgMTMuNDgyIDkuMjkgMTkuMTk1LTIuMjQyIDUuNzEzLTIzLjYxMyAxNC4yOTgtMjguODkgMTIuMjI3eiIgZmlsbD0iIzMxODZGRiI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS05LV9SXzBfKSI+PHBhdGggZD0iTTI4LjcxIDE3LjQ3MWMtMS40MTMgMS42NDktNS4xLjgwOC04LjIzNi0xLjg3OC0zLjEzNS0yLjY4Ny00LjUzMS02LjIwMS0zLjExOC03Ljg1IDEuNDEyLTEuNjQ5IDUuMS0uODA4IDguMjM1IDEuODc4czQuNTMyIDYuMiAzLjExOSA3Ljg1eiIgZmlsbD0iIzc0OUJGRiI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0xMC1fUl8wXykiPjxwYXRoIGQ9Ik0xOC4xNjMgOS4wNzdjNS44MSAzLjkzIDEyLjUwMiA0LjE5IDE0Ljk0Ni41NzcgMi40NDMtMy42MTItLjI4Ny05LjcyNy02LjA5OC0xMy42NTgtNS44MS0zLjkzMS0xMi41MDItNC4xOS0xNC45NDYtLjU3Ny0yLjQ0MyAzLjYxMi4yODcgOS43MjcgNi4wOTggMTMuNjU4eiIgZmlsbD0iI0ZDNDEzRCI+PC9wYXRoPjwvZz48ZyBmaWx0ZXI9InVybCgjbG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0xMS1fUl8wXykiPjxwYXRoIGQ9Ik0tLjkxNSAyLjY4NGMtMS40NCAzLjQ3My0uOTcgNi45NjcgMS4wNSA3LjgwNCAyLjAyLjgzNyA0LjgyNC0xLjMgNi4yNjQtNC43NzIgMS40NC0zLjQ3My45Ny02Ljk2Ny0xLjA1LTcuODA0LTIuMDItLjgzNy00LjgyNCAxLjMtNi4yNjQgNC43NzJ6IiBmaWxsPSIjRkZFRTQ4Ij48L3BhdGg+PC9nPjwvZz48ZGVmcz48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjE3LjU4NyIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktMS1fUl8wXyIgd2lkdGg9IjE5LjgzOCIgeD0iLTMuMjg4IiB5PSItMTEuOTE3Ij48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSIxLjExNyI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjM4LjU2NSIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktMi1fUl8wXyIgd2lkdGg9IjM4LjkiIHg9IjQuMjUxIiB5PSItMTMuNDkzIj48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSI1LjQiPjwvZmVHYXVzc2lhbkJsdXI+PC9maWx0ZXI+PGZpbHRlciBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgaGVpZ2h0PSIzNi41MTciIGlkPSJsb2JlLWljb25zLWFudGlncmF2aXR5LTMtX1JfMF8iIHdpZHRoPSI0MC45NTUiIHg9Ii0yMS44ODkiIHk9Ii0xMC41OTIiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ij48L2ZlRmxvb2Q+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIj48L2ZlQmxlbmQ+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl85NzdfMTE1IiBzdGREZXZpYXRpb249IjQuNTkxIj48L2ZlR2F1c3NpYW5CbHVyPjwvZmlsdGVyPjxmaWx0ZXIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIGhlaWdodD0iMzYuNTE3IiBpZD0ibG9iZS1pY29ucy1hbnRpZ3Jhdml0eS00LV9SXzBfIiB3aWR0aD0iNDAuOTU1IiB4PSItMjEuODg5IiB5PSItMTAuNTkyIj48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSI0LjU5MSI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjM2LjU5NSIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktNS1fUl8wXyIgd2lkdGg9IjM2LjYzMiIgeD0iLTE5LjA5OSIgeT0iLTEwLjI3OCI+PGZlRmxvb2QgZmxvb2Qtb3BhY2l0eT0iMCIgcmVzdWx0PSJCYWNrZ3JvdW5kSW1hZ2VGaXgiPjwvZmVGbG9vZD48ZmVCbGVuZCBpbj0iU291cmNlR3JhcGhpYyIgaW4yPSJCYWNrZ3JvdW5kSW1hZ2VGaXgiIHJlc3VsdD0ic2hhcGUiPjwvZmVCbGVuZD48ZmVHYXVzc2lhbkJsdXIgcmVzdWx0PSJlZmZlY3QxX2ZvcmVncm91bmRCbHVyXzk3N18xMTUiIHN0ZERldmlhdGlvbj0iNC41OTEiPjwvZmVHYXVzc2lhbkJsdXI+PC9maWx0ZXI+PGZpbHRlciBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgaGVpZ2h0PSIzNC4wODciIGlkPSJsb2JlLWljb25zLWFudGlncmF2aXR5LTYtX1JfMF8iIHdpZHRoPSIzMy41MzMiIHg9Ii45ODEiIHk9IjguNzU4Ij48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSI0LjM2MyI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjM1LjI3NiIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktNy1fUl8wXyIgd2lkdGg9IjM1Ljk3OCIgeD0iLTYuMTQzIiB5PSItMjEuNjU5Ij48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSIzLjk1NCI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjQ2LjUyMyIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktOC1fUl8wXyIgd2lkdGg9IjQ1LjExNCIgeD0iLTExLjk2IiB5PSItLjQ2Ij48ZmVGbG9vZCBmbG9vZC1vcGFjaXR5PSIwIiByZXN1bHQ9IkJhY2tncm91bmRJbWFnZUZpeCI+PC9mZUZsb29kPjxmZUJsZW5kIGluPSJTb3VyY2VHcmFwaGljIiBpbjI9IkJhY2tncm91bmRJbWFnZUZpeCIgcmVzdWx0PSJzaGFwZSI+PC9mZUJsZW5kPjxmZUdhdXNzaWFuQmx1ciByZXN1bHQ9ImVmZmVjdDFfZm9yZWdyb3VuZEJsdXJfOTc3XzExNSIgc3RkRGV2aWF0aW9uPSIzLjUzMSI+PC9mZUdhdXNzaWFuQmx1cj48L2ZpbHRlcj48ZmlsdGVyIGNvbG9yLWludGVycG9sYXRpb24tZmlsdGVycz0ic1JHQiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIiBoZWlnaHQ9IjI0LjA1NCIgaWQ9ImxvYmUtaWNvbnMtYW50aWdyYXZpdHktOS1fUl8wXyIgd2lkdGg9IjI1LjA5NCIgeD0iMTAuNDg1IiB5PSIuNTgiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ij48L2ZlRmxvb2Q+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIj48L2ZlQmxlbmQ+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl85NzdfMTE1IiBzdGREZXZpYXRpb249IjMuMTU5Ij48L2ZlR2F1c3NpYW5CbHVyPjwvZmlsdGVyPjxmaWx0ZXIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIGhlaWdodD0iMzAuMDA3IiBpZD0ibG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0xMC1fUl8wXyIgd2lkdGg9IjMzLjUwOCIgeD0iNS44MzMiIHk9Ii0xMi40NjciPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ij48L2ZlRmxvb2Q+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIj48L2ZlQmxlbmQ+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl85NzdfMTE1IiBzdGREZXZpYXRpb249IjIuNjY5Ij48L2ZlR2F1c3NpYW5CbHVyPjwvZmlsdGVyPjxmaWx0ZXIgY29sb3ItaW50ZXJwb2xhdGlvbi1maWx0ZXJzPSJzUkdCIiBmaWx0ZXJVbml0cz0idXNlclNwYWNlT25Vc2UiIGhlaWdodD0iMjYuMTUxIiBpZD0ibG9iZS1pY29ucy1hbnRpZ3Jhdml0eS0xMS1fUl8wXyIgd2lkdGg9IjIyLjE5NCIgeD0iLTguMzU1IiB5PSItOC44NzYiPjxmZUZsb29kIGZsb29kLW9wYWNpdHk9IjAiIHJlc3VsdD0iQmFja2dyb3VuZEltYWdlRml4Ij48L2ZlRmxvb2Q+PGZlQmxlbmQgaW49IlNvdXJjZUdyYXBoaWMiIGluMj0iQmFja2dyb3VuZEltYWdlRml4IiByZXN1bHQ9InNoYXBlIj48L2ZlQmxlbmQ+PGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZWZmZWN0MV9mb3JlZ3JvdW5kQmx1cl85NzdfMTE1IiBzdGREZXZpYXRpb249IjMuMzAzIj48L2ZlR2F1c3NpYW5CbHVyPjwvZmlsdGVyPjwvZGVmcz48L3N2Zz4=" alt=""><strong>Antigravity</strong></div>
+          <p>Para times que constroem com agentes na plataforma de desenvolvimento do Google.</p>
+          <code>$ skillhub install proposta-comercial --target antigravity</code>
+        </div>
+      </div>
+      <div class="one reveal"><span><strong>Um catálogo, três ferramentas.</strong> Atualize uma skill e ela chega a todo o time na hora, em qualquer ferramenta.</span><a class="btn ghost sm" href="#contato">Ver no seu ambiente</a></div>
+    </section>
+
+    <section id="como">
+      <div class="eyebrow reveal">06 · Como funciona</div>
+      <h2 class="reveal">Do conhecimento espalhado ao padrão da empresa</h2>
+      <p class="sub reveal">Começamos pelos processos que mais custam tempo e erro hoje.</p>
+      <div class="timeline" id="timeline">
+        <div class="fill"></div>
+        <div class="card step reveal"><div class="when">Semana 1</div><h3>Diagnóstico</h3><p>Mapeamos onde a IA já é usada, onde falha e quais tarefas têm maior impacto se forem padronizadas.</p></div>
+        <div class="card step reveal"><div class="when">Semanas 2 a 4</div><h3>Construção e testes</h3><p>Transformamos o conhecimento dos seus melhores profissionais em skills testadas, usando a biblioteca curada como ponto de partida.</p></div>
+        <div class="card step reveal"><div class="when">Semana 4</div><h3>Capacitação da equipe</h3><p>Treinamos o time com as skills que acabaram de ser criadas: quando usar, como pedir, como revisar o resultado e como sugerir melhorias.</p></div>
+        <div class="card step reveal"><div class="when">Contínuo</div><h3>Catálogo da empresa</h3><p>Seu time instala as skills aprovadas em um catálogo privado, com controle de acesso, versões e métricas de uso, em qualquer uma das ferramentas compatíveis.</p></div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="eyebrow reveal">07 · Perguntas frequentes</div>
+      <h2 class="reveal">Antes de conversar</h2>
+      <div class="reveal">
+        <details><summary>O que exatamente é uma skill?</summary><p>Um pacote com instruções, exemplos, modelos e, quando necessário, scripts que ensinam um assistente de IA a executar uma tarefa específica do jeito da sua empresa.</p></details>
+        <details><summary>Já temos prompts prontos. Qual a diferença?</summary><p>Prompts ficam espalhados, não são testados e não evoluem juntos. Skills são versionadas, avaliadas, distribuídas centralmente e carregam arquivos e regras que um prompt sozinho não comporta.</p></details>
+        <details><summary>Funciona com Claude Code, Codex e Antigravity ao mesmo tempo?</summary><p>Sim. A skill é escrita uma vez em formato aberto e instalada em cada ferramenta. Times diferentes podem usar ferramentas diferentes e seguir o mesmo padrão.</p></details>
+        <details><summary>Como as skills reduzem o consumo de tokens?</summary><p>Em vez de colar o mesmo contexto em toda conversa, a skill fica disponível e só é carregada quando a tarefa pede. Instruções claras também reduzem tentativas e correções, o que diminui o consumo e melhora a resposta.</p></details>
+        <details><summary>A capacitação do time está incluída?</summary><p>Sim. Cada implantação inclui treinamento prático com as skills da sua empresa, para que o time saiba usar, revisar e evoluir o que foi construído.</p></details>
+        <details><summary>Nossos dados ficam seguros?</summary><p>Skills privadas ficam no catálogo da sua empresa, visível apenas para quem você autorizar. Cada skill declara as permissões que usa, e tudo fica registrado para auditoria.</p></details>
+        <details><summary>Como medimos o resultado?</summary><p>Definimos indicadores por skill, como tempo por tarefa, taxa de retrabalho e aderência ao padrão, e acompanhamos a evolução no painel do catálogo.</p></details>
+      </div>
+    </section>
+
+    <section id="contato">
+      <div class="final reveal">
+        <div class="eyebrow">Diagnóstico gratuito</div>
+        <h2>Descubra onde a IA está <span class="gt">custando caro</span> na sua empresa</h2>
+        <p class="sub">Em 45 minutos mapeamos os processos com maior potencial e mostramos como ficariam como skills.</p>
+        <form onsubmit="event.preventDefault();this.outerHTML='<p><strong>Recebemos seu contato. Retornamos em até 1 dia útil.</strong></p>'">
+          <input type="text" required placeholder="Nome e cargo" aria-label="Nome e cargo">
+          <input type="email" required placeholder="E-mail corporativo" aria-label="E-mail corporativo">
+          <input type="text" required placeholder="Empresa" aria-label="Empresa">
+          <button class="btn" type="submit">Agendar diagnóstico →</button>
+        </form>
+        <p class="fine">Sem compromisso. Seus dados são usados apenas para este contato.</p>
+      </div>
+    </section>
+
+    <footer>
+      <span>© 2026 Skillhub · Claude Code, Codex e Antigravity são marcas de seus respectivos donos.</span>
+      <span><a href="#">Termos</a> · <a href="#">Privacidade</a> · <a href="#">Contato</a></span>
+    </footer>
+  </div>
+</main>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const header = document.querySelector('header');
+  const floatCta = document.querySelector('.float-cta');
+  const contato = document.getElementById('contato');
+  const timeline = document.getElementById('timeline');
+  const fill = timeline.querySelector('.fill');
+  const steps = [...timeline.querySelectorAll('.step')];
+  const railLinks = [...document.querySelectorAll('.rail a')];
+  const sections = railLinks.map(a => document.querySelector(a.getAttribute('href')));
+
+  // Rolagem: progresso, trilho, CTA flutuante e fio da linha do tempo
+  let ticking = false;
+  function onScroll(){
+    const max = root.scrollHeight - innerHeight;
+    const p = max > 0 ? Math.min(1, scrollY / max) : 0;
+    root.style.setProperty('--p', p.toFixed(4));
+    header.classList.toggle('scrolled', scrollY > 10);
+
+    const contatoTop = contato.getBoundingClientRect().top;
+    floatCta.classList.toggle('show', scrollY > innerHeight * .8 && contatoTop > innerHeight * .9);
+
+    let current = 0;
+    sections.forEach((s, i) => { if (s.getBoundingClientRect().top < innerHeight * .4) current = i; });
+    railLinks.forEach((a, i) => { a.classList.toggle('on', i === current); a.classList.toggle('done', i < current); });
+
+    const tl = timeline.getBoundingClientRect();
+    const reach = innerHeight * .6 - tl.top;
+    fill.style.height = Math.max(0, Math.min(tl.height - 16, reach)) + 'px';
+    steps.forEach(s => s.classList.toggle('lit', s.offsetTop + 30 < reach));
+    ticking = false;
+  }
+  addEventListener('scroll', () => { if (!ticking){ ticking = true; requestAnimationFrame(onScroll); } }, {passive:true});
+  addEventListener('resize', onScroll);
+  onScroll();
+
+  // Revelação ao entrar na tela
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.12, rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Luz que segue o cursor nos cards
+  document.querySelectorAll('.card').forEach(c => c.addEventListener('pointermove', e => {
+    const r = c.getBoundingClientRect();
+    c.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }));
+
+  // Terminal com as três ferramentas
+  const out = document.getElementById('termOut');
+  const tabs = [...document.querySelectorAll('.tabs button')];
+  const targets = ['claude', 'codex', 'antigravity'];
+  const names = ['Claude Code', 'Codex', 'Antigravity'];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let idx = 0, timer;
+  function render(i){
+    tabs.forEach((t, j) => t.classList.toggle('on', j === i));
+    out.innerHTML =
+`<span class="c"># instale a skill aprovada pela sua empresa</span>
+$ skillhub install <span class="ac">proposta-comercial</span> --target ${targets[i]}
+
+<span class="c">→ verificando permissões ............</span> <span class="ok">ok</span>
+<span class="c">→ 48 casos de teste ................</span> <span class="ok">48/48</span>
+<span class="c">→ versão ...........................</span> <span class="ac">v4.2.0</span>
+<span class="ok">✓</span> pronta para usar no ${names[i]}`;
+  }
+  function cycle(){ idx = (idx + 1) % 3; render(idx); }
+  tabs.forEach((t, i) => t.addEventListener('click', () => { idx = i; render(i); clearInterval(timer); }));
+  render(0);
+  if (!reduce) timer = setInterval(cycle, 3800);
+})();
+</script>
+</body>
+</html>
