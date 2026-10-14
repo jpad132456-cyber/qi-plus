@@ -1433,7 +1433,7 @@
   function goTo(target) {
     const margin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
     const max = root.scrollHeight - innerHeight;
-    const y = clamp(target.getBoundingClientRect().top + scrollY - margin, 0, max);
+    const y = target.id === 'topo' ? 0 : clamp(target.getBoundingClientRect().top + scrollY - margin, 0, max);
     if (reduce) { scrollTo(0, y); return; }
     const span = innerHeight * 1.2, far = Math.abs(y - scrollY) > span;
     if (far) scrollTo(0, y - Math.sign(y - scrollY) * span);
