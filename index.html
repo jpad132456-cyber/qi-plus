@@ -129,8 +129,8 @@
   .swap{display:inline-grid;justify-items:center;max-width:100%}
   .swap>span{grid-area:1/1}
   .swap .old{position:relative;display:inline-block;transition:opacity 1.1s ease,filter 1.1s ease}
-  .swap .old::after{content:"";position:absolute;left:-2%;top:54%;height:.075em;width:0;background:var(--bad);border-radius:4px;box-shadow:0 0 14px var(--bad);transition:width 1.4s cubic-bezier(.65,0,.35,1)}
-  .swap .old.strike::after{width:104%}
+  .sline{position:absolute;height:.075em;margin-top:-.0375em;background:var(--bad);border-radius:4px;box-shadow:0 0 14px var(--bad);transform:scaleX(0);transform-origin:left center;transition:transform 0s cubic-bezier(.45,0,.55,1);pointer-events:none}
+  .sline.on{transform:scaleX(1)}
   .swap .old.gone{opacity:0;filter:blur(6px)}
   .swap .new i{font-style:normal;visibility:hidden}
   .swap .new i.on{visibility:visible}
@@ -903,7 +903,36 @@
     neu.innerHTML = [...text].map(c => `<i>${c === ' ' ? '&nbsp;' : c}</i>`).join('').replace(/&nbsp;<\/i>/g, ' </i>');
     const chars = [...neu.querySelectorAll('i')];
     if (reduce) { old.classList.add('gone'); chars.forEach(c => c.classList.add('on')); return; }
-    await wait(4000); old.classList.add('strike');
+    await wait(4000);
+    // um risco por linha do texto, desenhado da esquerda para a direita, linha após linha
+    const measureRows = () => {
+      const range = document.createRange(); range.selectNodeContents(old.firstChild);
+      const base = old.getBoundingClientRect(), rows = [];
+      [...range.getClientRects()].forEach(r => {
+        if (r.width < 2) return;
+        const row = rows.find(x => Math.abs(x.top - r.top) < r.height / 2);
+        if (row) { row.left = Math.min(row.left, r.left); row.right = Math.max(row.right, r.right); }
+        else rows.push({ top: r.top, left: r.left, right: r.right, h: r.height });
+      });
+      return rows.sort((a, b) => a.top - b.top).map(r => ({ x: r.left - base.left - 4, y: r.top - base.top + r.h * .56, w: r.right - r.left + 8 }));
+    };
+    const placeRows = (rows, animate) => {
+      old.querySelectorAll('.sline').forEach(e => e.remove());
+      const totalW = rows.reduce((a, r) => a + r.w, 0) || 1;
+      let delay = 0;
+      rows.forEach(r => {
+        const el = document.createElement('i'), dur = 1.4 * r.w / totalW;
+        el.className = 'sline' + (animate ? '' : ' on');
+        Object.assign(el.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px' });
+        if (animate) { el.style.transitionDuration = dur.toFixed(2) + 's'; el.style.transitionDelay = delay.toFixed(2) + 's'; }
+        delay += dur; old.appendChild(el);
+      });
+    };
+    placeRows(measureRows(), true);
+    requestAnimationFrame(() => requestAnimationFrame(() => old.querySelectorAll('.sline').forEach(e => e.classList.add('on'))));
+    // se a tela mudar de tamanho durante o risco, os traços acompanham as linhas
+    const onResize = () => { if (!old.classList.contains('gone')) placeRows(measureRows(), false); };
+    addEventListener('resize', onResize);
     await wait(1900); old.classList.add('gone');
     await wait(900);
     for (let i = 0; i < chars.length; i++) {
