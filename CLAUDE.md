@@ -14,6 +14,8 @@ Importante! -> o Push altera o site que está no ar, ele deve somente ser usado 
 
 ## Arquitetura
 
+Antes de qualquer mudança visual (cor, fonte, espaçamento, componente novo), leia DESIGN.md — ele é a regra; o CSS atual ainda não segue toda a escala de fontes.
+
 backup/index-v1..v5.html são versões antigas congeladas — não editar nem usar como referência do estado atual.
 
 - logos/ guarda os SVGs das ferramentas (LobeHub Icons, MIT), mas no script eles estão embutidos em base64 no objeto LOGOS; alterar um arquivo em logos/ não muda a página sozinho.
