@@ -4,7 +4,7 @@
 
 ## Publico alvo
 
-Voltado para o publico empresarial: Executivos de medias/grandes empresas, funcionários encarregados com o uso e otimização de IA no fluxo interno. Trabalham dentro de companhias que ja usam IA mas veem pouco retorno e não possuem politica bem estruturada para o seu uso
+Uma pessoa só: o dono ou executivo de topo de uma empresa média. Olha para a rentabilidade, paga uma conta grande de IA e não vê a produtividade subir. Os problemas que ele enxerga são inconsistência nos documentos e dado inventado pela IA que só aparece lá na frente.
 
 ## Comandos
 
