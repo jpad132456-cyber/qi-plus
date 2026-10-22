@@ -143,46 +143,21 @@
   .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
   /* Prova curta no hero: sem padrão x com QI+ */
-  /* comparação em destaque: tamanhos seguem a escala do DESIGN.md (17px médio, 13px pequeno) */
-  /* hero mais compacto para o card inteiro caber na primeira dobra */
-  .hero{padding-top:40px}
-  .hero .lead{margin-bottom:28px}
-  .proof{margin:32px auto 0;max-width:1080px;border:1px solid var(--line-2);border-radius:22px;background:#0c0c11;overflow:hidden;text-align:left;box-shadow:0 40px 120px -40px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.02)}
-  .pf-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 24px;border-bottom:1px solid var(--line);font:500 13px var(--mono);color:var(--dim)}
-  .pf-head b{font-weight:500;color:var(--muted)}
+  .proof{margin:56px auto 0;max-width:920px;border:1px solid var(--line-2);border-radius:var(--radius);background:#0c0c11;overflow:hidden;text-align:left}
+  .pf-head{padding:12px 20px;border-bottom:1px solid var(--line);font:500 12.5px var(--mono);color:var(--dim)}
   .pf-cols{display:grid;grid-template-columns:1fr 1fr}
-  .pf-col{padding:8px 24px 0;min-width:0;display:flex;flex-direction:column}
-  .pf-col.no{background:linear-gradient(180deg,rgba(255,107,107,.06),transparent 70%)}
-  .pf-col.ok{border-left:1px solid var(--line-2);background:linear-gradient(180deg,#0f1a13,#0c0c11 85%);box-shadow:inset 0 2px 0 rgba(74,222,128,.55)}
-  .pf-t{font:600 17px var(--sans);padding:12px 0 2px;color:var(--bad);display:flex;align-items:center;gap:10px}
+  .pf-col{padding:6px 20px 12px;min-width:0}
+  .pf-col.ok{border-left:1px solid var(--line);background:linear-gradient(180deg,#0d1510,#0c0c11 80%)}
+  .pf-t{font:600 12.5px var(--mono);padding:10px 0 8px;color:var(--bad)}
   .pf-col.ok .pf-t{color:var(--good)}
-  .pf-t .ic{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-size:13px;background:rgba(255,107,107,.14);border:1px solid rgba(255,107,107,.35)}
-  .pf-col.ok .pf-t .ic{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.4)}
-  .pf-s{font:500 13px var(--mono);color:var(--dim);padding-bottom:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pf-row{display:grid;grid-template-columns:84px minmax(0,1fr) auto;align-items:center;gap:12px;min-height:56px;border-top:1px solid var(--line)}
-  .pf-row .k{font:500 13px var(--mono);color:var(--dim)}
-  .pf-row .v{font-size:17px;font-weight:500;line-height:1.3}
+  .pf-t{padding-bottom:2px}
+  .pf-s{font:500 12px var(--mono);color:var(--dim);padding-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pf-row{display:grid;grid-template-columns:76px minmax(0,1fr) auto;align-items:center;gap:10px;height:46px;border-top:1px solid var(--line)}
+  .pf-row .k{font:500 12px var(--mono);color:var(--dim)}
+  .pf-row .v{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14.5px}
   .pf-col.no .v{color:#d6c9c9}
-  .proof .pill{font-size:13px}
-  .pf-end{margin:auto -24px 0;padding:14px 24px;border-top:1px solid var(--line-2);font-size:17px;font-weight:600;display:flex;align-items:center;gap:10px}
-  .pf-col.no .pf-end{color:var(--bad);background:rgba(255,107,107,.06)}
-  .pf-col.ok .pf-end{color:var(--good);background:rgba(74,222,128,.07)}
-  .pf-end small{font:500 13px var(--mono);color:var(--dim);margin-left:auto}
-  /* entrada linha a linha: o erro aparece de um lado, a correção do outro */
-  .proof .pf-row,.proof .pf-end{opacity:0;transform:translateY(8px);transition:opacity .5s ease,transform .5s cubic-bezier(.2,.8,.2,1)}
-  .proof .pill{opacity:0;transform:scale(.8);transition:opacity .35s ease,transform .35s cubic-bezier(.3,1.6,.5,1)}
-  .proof.in .pf-row,.proof.in .pf-end,.proof.in .pill{opacity:1;transform:none}
-  .proof.in .no .pf-row:nth-child(3){transition-delay:0.55s}.proof.in .no .pf-row:nth-child(3) .pill{transition-delay:0.80s}
-  .proof.in .no .pf-row:nth-child(4){transition-delay:0.85s}.proof.in .no .pf-row:nth-child(4) .pill{transition-delay:1.10s}
-  .proof.in .no .pf-row:nth-child(5){transition-delay:1.15s}.proof.in .no .pf-row:nth-child(5) .pill{transition-delay:1.40s}
-  .proof.in .no .pf-end{transition-delay:1.60s}
-  .proof.in .ok .pf-row:nth-child(3){transition-delay:0.75s}.proof.in .ok .pf-row:nth-child(3) .pill{transition-delay:1.00s}
-  .proof.in .ok .pf-row:nth-child(4){transition-delay:1.05s}.proof.in .ok .pf-row:nth-child(4) .pill{transition-delay:1.30s}
-  .proof.in .ok .pf-row:nth-child(5){transition-delay:1.35s}.proof.in .ok .pf-row:nth-child(5) .pill{transition-delay:1.60s}
-  .proof.in .ok .pf-end{transition-delay:1.80s}
-  @media (prefers-reduced-motion:reduce){.proof .pf-row,.proof .pf-end,.proof .pill{opacity:1;transform:none;transition:none}}
-  @media (max-width:860px){.pf-cols{grid-template-columns:1fr}.pf-col.ok{border-left:0;border-top:1px solid var(--line-2)}.pf-col{padding:4px 16px 0}.pf-end{margin:auto -16px 0;padding:14px 16px}.pf-head{padding:12px 16px}.pf-head .hide-s{display:none}}
-  @media (max-width:500px){.pf-row{grid-template-columns:64px minmax(0,1fr);row-gap:6px;padding:12px 0;align-items:start}.pf-row .k{padding-top:3px}.pf-row .pill{grid-column:2;justify-self:start}.pf-s{white-space:normal;line-height:1.4}.pf-end small{display:none}}
+  @media (max-width:860px){.pf-cols{grid-template-columns:1fr}.pf-col.ok{border-left:0;border-top:1px solid var(--line-2)}.pf-col{padding:4px 16px 10px}}
+  @media (max-width:500px){.pf-row{grid-template-columns:62px minmax(0,1fr) auto;height:auto;min-height:46px;padding:7px 0}.pf-row .v{white-space:normal;line-height:1.25;font-size:14px}.pf-s{white-space:normal;line-height:1.4}}
 
   /* Palco: do caos ao padrão */
   #solucao .stage-wrap{margin:40px auto 56px}
@@ -604,23 +579,21 @@
       </div>
 
       <div class="proof reveal d3" role="group" aria-label="Mesma proposta comercial, mesma IA: sem padrão e com QI+">
-        <div class="pf-head"><span><b>proposta-comercial</b> · mesma IA, mesmo pedido</span><span class="hide-s">o que chega no cliente</span></div>
+        <div class="pf-head">proposta-comercial · mesma IA, mesmo pedido</div>
         <div class="pf-cols">
           <div class="pf-col no">
-            <div class="pf-t"><span class="ic" aria-hidden="true">✕</span>Sem padrão</div>
+            <div class="pf-t">✕ Sem padrão</div>
             <div class="pf-s">prompt: "escreva uma proposta comercial"</div>
             <div class="pf-row"><span class="k">Preço</span><span class="v">≈ R$ 48.000 (estimado)</span><span class="pill b">inventado</span></div>
             <div class="pf-row"><span class="k">Desconto</span><span class="v">25% especial</span><span class="pill b">sem aprovação</span></div>
             <div class="pf-row"><span class="k">Revisão</span><span class="v">Revisar tudo</span><span class="pill b">retrabalho</span></div>
-            <div class="pf-end">✕ Volta para revisão<small>3 problemas</small></div>
           </div>
           <div class="pf-col ok">
-            <div class="pf-t"><span class="ic" aria-hidden="true">✓</span>Com QI+</div>
+            <div class="pf-t">✓ Com QI+</div>
             <div class="pf-s">skill proposta-comercial v4.2 · 6 regras · 48 testes</div>
             <div class="pf-row"><span class="k">Preço</span><span class="v">R$ 52.400 (tabela 10/2026)</span><span class="pill g">fonte oficial</span></div>
             <div class="pf-row"><span class="k">Desconto</span><span class="v">10%, na política</span><span class="pill g">conforme</span></div>
             <div class="pf-row"><span class="k">Revisão</span><span class="v">Checklist aprovado</span><span class="pill g">validado</span></div>
-            <div class="pf-end">✓ Pronto para enviar<small>0 ajustes</small></div>
           </div>
         </div>
       </div>
@@ -962,13 +935,21 @@
     if (!nodes.length) return;
     const x0 = offsetIn(nodes[0]).x;
     const yStart = 40;
-    // o fio é reto desde o topo, na mesma raia dos nós
+    // o caos vai até o meio do problema; dali até a solução o fio se organiza
     const prob = document.getElementById('problema');
     const yQual = prob.offsetTop + prob.offsetHeight * .5;
     const ySol = document.getElementById('solucao').offsetTop;
     const yEnd = offsetIn(nodes[nodes.length - 1]).y;
+    const maxA = Math.min(W * .34, 420);
     const pts = [];
-    for (let t = yStart; t <= yEnd; t += 3) pts.push([x0, t]);
+    for (let t = yStart; t <= yEnd; t += 3) {
+      const c = t < yQual ? 1 : t > ySol ? 0 : 1 - smooth((t - yQual) / (ySol - yQual));
+      const base = lerp(W / 2, x0, smooth(clamp((t - yStart) / (yQual - yStart))));
+      const A = c * maxA * (.55 + .45 * Math.sin(t * .0021));
+      let x = base + A * (.6 * Math.sin(t * .013) + .4 * Math.sin(t * .031 + 1.3));
+      const y = t - c * 40 * Math.sin(t * .045);
+      pts.push([clamp(x, 6, W - 6), y]);
+    }
     const cum = [0];
     for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
     const d = 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L');
