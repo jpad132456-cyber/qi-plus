@@ -32,9 +32,14 @@ O `index.html` usa cerca de 30 tamanhos diferentes (de 11px a 84px) e ainda não
 
 ## 2. Cores
 
-### Regra: laranja é sinal de importância
+### Regra: onde o laranja pode aparecer
 
-O laranja `#ff6a3d` e o gradiente laranja → âmbar (`linear-gradient(100deg, #ff6a3d, #ffb03a)`) marcam só o que é mais importante na página: o botão de ação principal e títulos muito importantes. Nem todo título leva laranja. Se o laranja aparece em muita coisa, ele deixa de sinalizar importância.
+O laranja `#ff6a3d` e o gradiente laranja → âmbar (`linear-gradient(100deg, #ff6a3d, #ffb03a)`) só podem aparecer em dois lugares:
+
+1. **No título inicial** da página (o título do hero).
+2. **Nos botões que vendem ou levam a uma ação importante.** "Importante" quer dizer: o cliente inserir o cadastro e a venda continuar.
+
+Fora disso, não use laranja em texto nem em botão.
 
 Hoje o site não segue isso: todo `h2` tem um trecho em gradiente (`.gt`), todo eyebrow de seção é laranja, e o laranja também aparece em ícones, bordas, marcadores e brilhos.
 
